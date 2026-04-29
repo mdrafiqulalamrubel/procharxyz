@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import Navbar from '../src/components/Navbar';
+import PageNavbar from '../src/components/PageNavbar';
 import Head from 'next/head';
 import Link from 'next/link';
 import { ArrowLeft, Shield, Clock } from 'lucide-react';
@@ -80,7 +80,7 @@ export default function PrivacyPolicy() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
 
       {/* ─── NAVBAR ─── */}
-      <Navbar />
+      <PageNavbar onSignup={() => {}} />
 
         {/* HEADER */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
