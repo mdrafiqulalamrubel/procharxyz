@@ -1,0 +1,31 @@
+# Allow all bots to crawl the site
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /.next/
+Disallow: /node_modules/
+
+# Specific bot rules
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+Request-rate: 100/1m
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://prochar.xyz/sitemap.xml
+
+# Local business rules for Bangladesh
+# Allow social media crawlers for rich media
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /

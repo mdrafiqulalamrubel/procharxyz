@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+  --color-growth-50: #ecfdf5;
+  --color-growth-100: #d1fae5;
+  --color-growth-200: #a7f3d0;
+  --color-growth-300: #6ee7b7;
+  --color-growth-400: #34d399;
+  --color-growth-500: #10b981;
+  --color-growth-600: #059669;
+  --color-growth-700: #047857;
+  --color-growth-800: #065f46;
+  --color-growth-900: #064e3b;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #2563eb 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #2563eb 0%, #059669 100%);
+}
+
+.gradient-bg-soft {
+  background: linear-gradient(135deg, #eff6ff 0%, #ecfdf5 100%);
+}
+
+.hero-pattern {
+  background-image: radial-gradient(circle at 1px 1px, rgba(37, 99, 235, 0.08) 1px, transparent 0);
+  background-size: 40px 40px;
+}
