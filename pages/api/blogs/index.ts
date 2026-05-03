@@ -1,42 +1,84 @@
-// pages/api/blogs/index.ts
-// Public endpoint — returns only PUBLISHED blogs
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { connectDB } from '../../../lib/mongodb';
-import Blog from '../../../models/Blog';
+import { NextApiRequest, NextApiResponse } from 'next';
+import slug from 'slug';
+import clientPromise from '../../../lib/mongodb';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-
   try {
-    await connectDB();
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB || 'prochar_crm');
 
-    const page     = Math.max(1, parseInt(req.query.page as string)  || 1);
-    const limit    = Math.max(1, parseInt(req.query.limit as string) || 9);
-    const category = req.query.category as string | undefined;
-    const search   = req.query.search   as string | undefined;
+    if (req.method === 'GET') {
+      const { category, tag, limit = '10', page = '1' } = req.query;
 
-    // Build filter — ONLY published posts
-    const filter: any = { published: true };
-    if (category) filter.category = category;
-    if (search)   filter.$or = [
-      { title:   { $regex: search, $options: 'i' } },
-      { excerpt: { $regex: search, $options: 'i' } },
-    ];
+      let filter: any = { published: true };
 
-    const skip  = (page - 1) * limit;
-    const total = await Blog.countDocuments(filter);
+      if (category) {
+        filter.category = category;
+      }
+      if (tag) {
+        filter.tags = tag;
+      }
 
-    const blogs = await Blog.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      // Return content too so frontend can extract thumbnail image
-      .select('title slug excerpt content category tags author image coverImage views createdAt')
-      .lean();
+      const limitNum = parseInt(limit as string);
+      const pageNum = parseInt(page as string);
 
-    return res.status(200).json({ blogs, total, page, limit });
-  } catch (err) {
-    console.error('[/api/blogs] error:', err);
-    return res.status(500).json({ error: 'Server error', detail: String(err) });
+      const blogs = await db
+        .collection('blogs')
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip((pageNum - 1) * limitNum)
+        .limit(limitNum)
+        .toArray();
+
+      const total = await db.collection('blogs').countDocuments(filter);
+
+      res.status(200).json({
+        blogs: blogs.map((b: any) => ({
+          ...b,
+          _id: b._id.toString(),
+        })),
+        total,
+        page: pageNum,
+        pages: Math.ceil(total / limitNum),
+      });
+    } else if (req.method === 'POST') {
+      // Check admin auth
+      const auth = req.headers.authorization;
+      if (!auth?.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const body = req.body;
+
+      const blogPost = {
+        title: body.title,
+        slug: slug(body.title).toLowerCase(),
+        excerpt: body.excerpt,
+        content: body.content,
+        category: body.category,
+        tags: body.tags || [],
+        author: body.author || 'Admin',
+        image: body.image,
+        published: body.published || false,
+        views: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        seoTitle: body.seoTitle || body.title,
+        seoDescription: body.seoDescription || body.excerpt,
+        seoKeywords: body.seoKeywords || [],
+        canonicalUrl: body.canonicalUrl,
+      };
+
+      const result = await db.collection('blogs').insertOne(blogPost);
+
+      res.status(201).json({
+        ...blogPost,
+        _id: result.insertedId.toString(),
+      });
+    } else {
+      res.status(405).json({ error: 'Method not allowed' });
+    }
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 }
