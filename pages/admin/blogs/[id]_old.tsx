@@ -118,19 +118,7 @@ export default function BlogEditorPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      // content may be old BlockNote array or new TipTap HTML string
-      const rawContent = data.content;
-      const safeContent = typeof rawContent === 'string'
-        ? rawContent
-        : Array.isArray(rawContent)
-          ? '' // old BlockNote format — start fresh
-          : '';
-      setBlog({
-        ...data,
-        content: safeContent,
-        tags: Array.isArray(data.tags) ? data.tags : [],
-        seoKeywords: Array.isArray(data.seoKeywords) ? data.seoKeywords : [],
-      });
+      setBlog({ ...data, content: data.content || '' });
       if (data.image) setImagePreview(data.image);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -204,60 +192,30 @@ export default function BlogEditorPage() {
           return;
         }
       } catch {}
-      // Fallback: compress before base64 to avoid large payload
-      const src = await compressImageToBase64(file, 1200, 0.8);
-      setImagePreview(src);
-      setBlog(p => ({ ...p, image: src }));
+      // Fallback: base64 preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const src = e.target?.result as string;
+        setImagePreview(src);
+        setBlog(p => ({ ...p, image: src }));
+      };
+      reader.readAsDataURL(file);
     } finally { setUploadingImg(false); }
   };
 
   const handleInlineImageUpload = async (file: File): Promise<string> => {
-    // Step 1: try real upload endpoint
     const token = localStorage.getItem('admin_token');
     const form = new FormData();
     form.append('file', file);
     try {
-      const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: form,
-      });
-      if (res.ok) {
-        const { url } = await res.json();
-        return url;
-      }
+      const res = await fetch('/api/admin/upload', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form });
+      if (res.ok) { const { url } = await res.json(); return url; }
     } catch {}
-
-    // Step 2: fallback — compress image before base64 to avoid hanging
-    return compressImageToBase64(file, 900, 0.75);
-  };
-
-  // Compress image to max width and quality before converting to base64
-  const compressImageToBase64 = (file: File, maxWidth = 900, quality = 0.75): Promise<string> => {
+    // fallback base64
     return new Promise((resolve) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        const canvas = document.createElement('canvas');
-        let { width, height } = img;
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = () => {
-        // Last resort: raw base64
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target?.result as string);
-        reader.readAsDataURL(file);
-      };
-      img.src = url;
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.readAsDataURL(file);
     });
   };
 
@@ -308,7 +266,7 @@ export default function BlogEditorPage() {
     );
   }
 
-  const wordCount = typeof blog.content === 'string' ? blog.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length : 0;
+  const wordCount = blog.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length;
 
   return (
     <AdminLayout>

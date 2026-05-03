@@ -16,16 +16,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB || 'prochar_crm');
+    const db = client.db('prochar');
     const { id } = req.query;
 
     if (req.method === 'GET') {
-      let blog;
-      try {
-        blog = await db.collection('blogs').findOne({ _id: new ObjectId(id as string) });
-      } catch {
-        blog = await db.collection('blogs').findOne({ _id: id as any });
-      }
+      const blog = await db.collection('blogs').findOne({ _id: new ObjectId(id as string) });
 
       if (!blog) {
         return res.status(404).json({ error: 'Blog not found' });
@@ -42,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const newSlug = body.title ? slug(body.title).toLowerCase() : body.slug;
 
       const result = await db.collection('blogs').updateOne(
-        { _id: (() => { try { return new ObjectId(id as string); } catch { return id as any; } })() },
+        { _id: new ObjectId(id as string) },
         {
           $set: {
             title: body.title,
@@ -65,9 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       res.status(200).json({ modifiedCount: result.modifiedCount });
     } else if (req.method === 'DELETE') {
-      const result = await db.collection('blogs').deleteOne({
-        _id: (() => { try { return new ObjectId(id as string); } catch { return id as any; } })()
-      });
+      const result = await db.collection('blogs').deleteOne({ _id: new ObjectId(id as string) });
 
       res.status(200).json({ deletedCount: result.deletedCount });
     } else {

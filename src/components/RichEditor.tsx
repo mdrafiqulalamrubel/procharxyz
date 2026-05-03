@@ -8,9 +8,9 @@ import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import { Table } from '@tiptap/extension-table';
-import { TableRow } from '@tiptap/extension-table-row';
-import { TableHeader } from '@tiptap/extension-table-header';
-import { TableCell } from '@tiptap/extension-table-cell';
+import TableRow from '@tiptap/extension-table-row';
+import TableHeader from '@tiptap/extension-table-header';
+import TableCell from '@tiptap/extension-table-cell';
 import Youtube from '@tiptap/extension-youtube';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
@@ -57,6 +57,27 @@ export default function RichEditor({ content, onChange, onImageUpload }: RichEdi
     },
   });
 
+  const compressImage = (file: File, maxWidth = 900, quality = 0.75): Promise<string> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        let { width, height } = img;
+        if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.readAsDataURL(file);
+      };
+      img.src = objectUrl;
+    });
+
   const handleImageFile = useCallback(async (file: File) => {
     if (!editor || !file.type.startsWith('image/')) return;
     setUploading(true);
@@ -65,11 +86,8 @@ export default function RichEditor({ content, onChange, onImageUpload }: RichEdi
       if (onImageUpload) {
         src = await onImageUpload(file);
       } else {
-        src = await new Promise<string>((res) => {
-          const reader = new FileReader();
-          reader.onload = (e) => res(e.target?.result as string);
-          reader.readAsDataURL(file);
-        });
+        // Compress before base64 — prevents hanging on large images
+        src = await compressImage(file, 900, 0.75);
       }
       editor.chain().focus().setImage({ src, alt: file.name }).run();
     } finally {
@@ -203,12 +221,11 @@ export default function RichEditor({ content, onChange, onImageUpload }: RichEdi
 
       <style>{`
         .re-wrap .tiptap {
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          line-height: 1.75;
+          font-family: Georgia, 'Times New Roman', serif;
+          line-height: 1.85;
           color: #1e293b;
           min-height: 500px;
           padding: 2rem 2.5rem;
-          font-size: 1rem;
         }
         .re-wrap .tiptap:focus { outline: none; }
         .re-wrap .tiptap p.is-editor-empty:first-child::before {
