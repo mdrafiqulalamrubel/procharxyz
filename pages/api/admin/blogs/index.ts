@@ -1,81 +1,56 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import clientPromise from '../../../../lib/mongodb';
+// pages/api/admin/blogs/index.ts
+// Admin only — list ALL blogs (published + draft) + create new
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { connectDB } from '../../../../lib/mongodb';
+import Blog from '../../../../models/Blog';
 
-// Verify admin auth
-function verifyAdmin(req: NextApiRequest) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token) {
-    return false;
-  }
-  return !!token;
-}
+export const config = { api: { bodyParser: true } };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  try {
-    if (!verifyAdmin(req)) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+  await connectDB();
 
-    const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB || 'prochar_crm');
+  if (req.method === 'GET') {
+    try {
+      const page  = Math.max(1, parseInt(req.query.page as string)  || 1);
+      const limit = Math.max(1, parseInt(req.query.limit as string) || 20);
+      const skip  = (page - 1) * limit;
 
-    if (req.method === 'GET') {
-      const { limit = '20', page = '1' } = req.query;
+      const filter: any = {};
+      if (req.query.published !== undefined) filter.published = req.query.published === 'true';
+      if (req.query.category)  filter.category = req.query.category;
 
-      const limitNum = parseInt(limit as string);
-      const pageNum = parseInt(page as string);
-
-      const blogs = await db
-        .collection('blogs')
-        .find({})
+      const total = await Blog.countDocuments(filter);
+      const blogs = await Blog.find(filter)
         .sort({ createdAt: -1 })
-        .skip((pageNum - 1) * limitNum)
-        .limit(limitNum)
-        .toArray();
+        .skip(skip)
+        .limit(limit)
+        .lean();
 
-      const total = await db.collection('blogs').countDocuments({});
-
-      res.status(200).json({
-        blogs: blogs.map((b: any) => ({
-          ...b,
-          _id: b._id.toString(),
-        })),
-        total,
-        page: pageNum,
-        pages: Math.ceil(total / limitNum),
-      });
-    } else if (req.method === 'POST') {
-      const body = req.body;
-
-      const blogPost = {
-        title: body.title,
-        slug: body.slug,
-        excerpt: body.excerpt,
-        content: body.content,
-        category: body.category,
-        tags: body.tags || [],
-        author: body.author || 'Admin',
-        image: body.image,
-        published: body.published || false,
-        views: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        seoTitle: body.seoTitle || body.title,
-        seoDescription: body.seoDescription || body.excerpt,
-        seoKeywords: body.seoKeywords || [],
-        canonicalUrl: body.canonicalUrl,
-      };
-
-      const result = await db.collection('blogs').insertOne(blogPost);
-
-      res.status(201).json({
-        ...blogPost,
-        _id: result.insertedId.toString(),
-      });
-    } else {
-      res.status(405).json({ error: 'Method not allowed' });
+      return res.status(200).json({ blogs, total });
+    } catch (err) {
+      return res.status(500).json({ error: String(err) });
     }
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
   }
+
+  if (req.method === 'POST') {
+    try {
+      const body = req.body;
+      if (!body.title?.trim()) return res.status(400).json({ error: 'Title is required' });
+
+      // Ensure slug is unique
+      let baseSlug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      let finalSlug = baseSlug;
+      let count = 1;
+      while (await Blog.exists({ slug: finalSlug })) {
+        finalSlug = `${baseSlug}-${count++}`;
+      }
+
+      const blog = await Blog.create({ ...body, slug: finalSlug });
+      return res.status(201).json(blog);
+    } catch (err) {
+      return res.status(500).json({ error: String(err) });
+    }
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
 }

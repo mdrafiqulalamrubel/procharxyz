@@ -54,7 +54,7 @@ export default function BlogsPage() {
   const [page, setPage]           = useState(1);
   const [total, setTotal]         = useState(0);
   const [search, setSearch]       = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'draft'>('all');
+  const [filterStatus, setFilter] = useState<'all' | 'published' | 'draft'>('all');
   const [openMenu, setOpenMenu]   = useState<string | null>(null);
   const [deleting, setDeleting]   = useState<string | null>(null);
 
