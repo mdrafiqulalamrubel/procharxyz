@@ -81,12 +81,12 @@ export default function BlogEditorPage() {
     excerpt: '',
     content: '',
     category: '',
-    tags: [],
+    tags: [] as string[],
     author: 'Admin',
     published: false,
     seoTitle: '',
     seoDescription: '',
-    seoKeywords: [],
+    seoKeywords: [] as string[],
     canonicalUrl: '',
   });
 
@@ -308,7 +308,7 @@ export default function BlogEditorPage() {
     );
   }
 
-  const wordCount = typeof blog.content === 'string' ? blog.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length : 0;
+  const wordCount = blog.content && typeof blog.content === 'string' ? (blog.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length) : 0;
 
   return (
     <AdminLayout>

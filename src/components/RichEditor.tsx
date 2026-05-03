@@ -35,10 +35,14 @@ export default function RichEditor({ content, onChange, onImageUpload }: RichEdi
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit.configure({ codeBlock: false }),
+      StarterKit.configure({
+        codeBlock: false,
+        link: false,
+        underline: false,
+      }),
       Underline,
       Image.configure({ allowBase64: true, inline: false }),
-      Link.configure({ openOnClick: false }),
+      Link.configure({ openOnClick: false, autolink: true }),
       Placeholder.configure({
         placeholder: 'Start writing… Paste from Word, Google Docs, or anywhere — formatting is preserved.',
       }),

@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB || 'prochar_crm');
+    const db = client.db('prochar');
 
     if (req.method === 'GET') {
       const { limit = '20', page = '1' } = req.query;
