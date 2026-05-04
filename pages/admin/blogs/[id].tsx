@@ -401,8 +401,9 @@ export default function BlogEditorPage() {
                 value={blog.title}
                 rows={2}
                 onChange={e => setBlog(p => ({ ...p, title: e.target.value }))}
-                className="w-full px-8 pt-6 pb-2 text-3xl sm:text-4xl font-black text-slate-900 placeholder-slate-300 resize-none focus:outline-none border-b border-slate-100"
-                style={{ fontFamily: "'Syne', sans-serif" }}
+                // TO THIS:
+                className="w-full px-8 pt-6 pb-2 text-xl sm:text-2xl font-bold text-slate-900 placeholder-slate-300 resize-none focus:outline-none border-b border-slate-100"
+                style={{ fontFamily: "'Times New Roman', Times, serif" }}
               />
               <div className="flex items-center gap-2 px-8 py-3 text-xs text-slate-400">
                 <span>Permalink:</span>

@@ -289,10 +289,8 @@ export default function BlogPostPage() {
       />
 
       <style>{`
-        .blog-content {
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          font-size: 1.05rem; line-height: 1.85; color: #1e293b; padding: 2.5rem 3rem;
-        }
+       // TO THIS:
+        .blog-content { font-family: 'Times New Roman', Times, serif; font-size: 1.05rem; line-height: 1.85; color: #1e293b; padding: 2.5rem 3rem; }
         .blog-content h1 { font-size: 2rem;    font-weight: 800; margin: 2rem 0 1rem;     line-height: 1.2; color: #0f172a; }
         .blog-content h2 { font-size: 1.55rem; font-weight: 700; margin: 1.75rem 0 .75rem; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: .4rem; }
         .blog-content h3 { font-size: 1.25rem; font-weight: 700; margin: 1.5rem 0 .6rem;   color: #0f172a; }

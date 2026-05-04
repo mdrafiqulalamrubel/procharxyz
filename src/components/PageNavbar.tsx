@@ -38,12 +38,11 @@ export default function PageNavbar({ onSignup }: PageNavbarProps = {}) {
         <div className="flex items-center justify-between h-16 lg:h-20">
 
           {/* Logo */}
-          {/* Logo */}
           <a href="/" className="flex items-center">
             <img
               src="/logo.png"
               alt="Prochar Logo"
-              className="h-10 w-auto"
+              className="h-16 w-auto"
             />
           </a>
 

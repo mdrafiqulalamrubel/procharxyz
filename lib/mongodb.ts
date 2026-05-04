@@ -3,7 +3,10 @@ import { randomUUID } from 'crypto';
 
 const uri = process.env.MONGODB_URI || '';
 if (!uri) {
-  // do not throw here — allow fallback to in-memory DB for local development
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('MONGODB_URI is not set in production — please set MONGODB_URI to your Atlas connection string');
+  }
+  // do not throw in development — allow fallback to in-memory DB for local development
   // eslint-disable-next-line no-console
   console.warn('MONGODB_URI not set — using in-memory fallback DB');
 }
@@ -33,12 +36,23 @@ class InMemoryClient {
           },
           find: (_filter?: any) => {
             const arr = store.get(name)!.slice();
-            return {
+            // provide chainable sort()/skip()/limit() that mirror Mongo's cursor API
+            const chain = {
               sort: (_sortObj: any) => ({
+                skip: (s: number) => ({
+                  limit: (n: number) => ({ toArray: async () => arr.slice(s, s + n) }),
+                }),
                 limit: (n: number) => ({ toArray: async () => arr.slice(0, n) }),
+                toArray: async () => arr,
               }),
+              skip: (s: number) => ({
+                limit: (n: number) => ({ toArray: async () => arr.slice(s, s + n) }),
+              }),
+              limit: (n: number) => ({ toArray: async () => arr.slice(0, n) }),
               toArray: async () => arr,
             };
+
+            return chain;
           },
           findOne: async (filter: any) => {
             const arr = store.get(name)!;
