@@ -42,6 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Return the public URL
     const filename = path.basename(file.filepath);
     const url = `/uploads/${filename}`;
-    return res.status(200).json({ url });
+    const fullUrl = process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}${url}` : url;
+    return res.status(200).json({ url: fullUrl });
   });
 }

@@ -100,6 +100,7 @@ export default function BlogEditorPage() {
   const [addingCat, setAddingCat]         = useState(false);
   const [imagePreview, setImagePreview]   = useState<string>('');
   const [uploadingImg, setUploadingImg]   = useState(false);
+  const [errorMessage, setErrorMessage]   = useState<string | null>(null);
   const coverRef = useRef<HTMLInputElement>(null);
 
   // ── Load data ──────────────────────────────────────────────────────────────
@@ -201,13 +202,26 @@ export default function BlogEditorPage() {
           const { url } = await res.json();
           setImagePreview(url);
           setBlog(p => ({ ...p, image: url }));
+          setErrorMessage(null);
+          return;
+        } else {
+          if (res.status === 413) {
+            setErrorMessage('Image too large. Please choose a smaller file (max 5 MB).');
+          } else {
+            const err = await res.text();
+            setErrorMessage(`Upload failed: ${err}`);
+          }
           return;
         }
-      } catch {}
+      } catch (e) {
+        setErrorMessage('Network error during upload.');
+        return;
+      }
       // Fallback: compress before base64 to avoid large payload
       const src = await compressImageToBase64(file, 1200, 0.8);
       setImagePreview(src);
       setBlog(p => ({ ...p, image: src }));
+      setErrorMessage(null);
     } finally { setUploadingImg(false); }
   };
 
@@ -337,6 +351,12 @@ export default function BlogEditorPage() {
                 <span className="flex items-center gap-1 text-xs text-red-500 font-medium flex-shrink-0">
                   <AlertCircle size={12} /> Error saving
                 </span>
+              )}
+              {errorMessage && (
+                <div className="flex items-center gap-2 bg-rose-100 text-rose-800 border border-rose-200 rounded p-2 mt-2">
+                  <AlertCircle size={14} />
+                  <span>{errorMessage}</span>
+                </div>
               )}
               {saving && (
                 <span className="flex items-center gap-1 text-xs text-slate-400 flex-shrink-0">

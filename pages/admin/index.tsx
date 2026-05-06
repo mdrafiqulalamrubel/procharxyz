@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import AdminLayout from '../../src/components/AdminLayout';
+import { Download, AlertCircle, User, ShoppingCart, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
@@ -9,20 +10,38 @@ export default function AdminDashboard() {
   const [purchases, setPurchases] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
-  
+  const [loadingCustomers, setLoadingCustomers] = useState(true);
+  const [loadingPurchases, setLoadingPurchases] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     async function load() {
-      const c = await fetch('/api/admin/customers');
-      if (c.status === 401) return router.push('/admin/login');
-      const cj = await c.json();
-      setCustomers(cj.customers || []);
+      try {
+        setLoadingCustomers(true);
+        const c = await fetch('/api/admin/customers');
+        if (c.status === 401) return router.push('/admin/login');
+        if (!c.ok) throw new Error('Failed to load customers');
+        const cj = await c.json();
+        setCustomers(cj.customers || []);
+      } catch (e) {
+        setErrorMessage('Error loading contacts');
+      } finally {
+        setLoadingCustomers(false);
+      }
 
-      const p = await fetch('/api/admin/purchases');
-      if (p.status === 401) return router.push('/admin/login');
-      const pj = await p.json();
-      setPurchases(pj.purchases || []);
+      try {
+        setLoadingPurchases(true);
+        const p = await fetch('/api/admin/purchases');
+        if (p.status === 401) return router.push('/admin/login');
+        if (!p.ok) throw new Error('Failed to load purchases');
+        const pj = await p.json();
+        setPurchases(pj.purchases || []);
+      } catch (e) {
+        setErrorMessage(prev => (prev ? prev + '; Error loading purchases' : 'Error loading purchases'));
+      } finally {
+        setLoadingPurchases(false);
+      }
     }
     load();
   }, [router]);
@@ -60,6 +79,12 @@ export default function AdminDashboard() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="text-slate-600 mt-1">Overview of recent contacts and purchases</p>
+        {errorMessage && (
+          <div className="flex items-center gap-2 bg-rose-100 text-rose-800 border border-rose-200 rounded p-3 mt-4">
+            <AlertCircle size={16} />
+            <span>{errorMessage}</span>
+          </div>
+        )}
       </div>
 
       
@@ -89,7 +114,7 @@ export default function AdminDashboard() {
               onChange={e => { setQuery(e.target.value); setPage(1); }}
               className="px-3 py-2 border rounded w-80"
             />
-            <button onClick={() => exportCSV(filtered, 'contacts.csv')} className="px-3 py-2 bg-slate-800 text-white rounded">Export CSV</button>
+            <button onClick={() => exportCSV(filtered, 'contacts.csv')} className="flex items-center gap-2 px-3 py-2 bg-slate-800 text-white rounded hover:bg-slate-700 transition-colors"><Download size={16} />Export CSV</button>
           </div>
         </div>
 
