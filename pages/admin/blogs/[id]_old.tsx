@@ -81,12 +81,12 @@ export default function BlogEditorPage() {
     excerpt: '',
     content: '',
     category: '',
-    tags: [] as string[],
+    tags: [],
     author: 'Admin',
     published: false,
     seoTitle: '',
     seoDescription: '',
-    seoKeywords: [] as string[],
+    seoKeywords: [],
     canonicalUrl: '',
   });
 
@@ -100,7 +100,6 @@ export default function BlogEditorPage() {
   const [addingCat, setAddingCat]         = useState(false);
   const [imagePreview, setImagePreview]   = useState<string>('');
   const [uploadingImg, setUploadingImg]   = useState(false);
-  const [errorMessage, setErrorMessage]   = useState<string | null>(null);
   const coverRef = useRef<HTMLInputElement>(null);
 
   // ── Load data ──────────────────────────────────────────────────────────────
@@ -119,19 +118,7 @@ export default function BlogEditorPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      // content may be old BlockNote array or new TipTap HTML string
-      const rawContent = data.content;
-      const safeContent = typeof rawContent === 'string'
-        ? rawContent
-        : Array.isArray(rawContent)
-          ? '' // old BlockNote format — start fresh
-          : '';
-      setBlog({
-        ...data,
-        content: safeContent,
-        tags: Array.isArray(data.tags) ? data.tags : [],
-        seoKeywords: Array.isArray(data.seoKeywords) ? data.seoKeywords : [],
-      });
+      setBlog({ ...data, content: data.content || '' });
       if (data.image) setImagePreview(data.image);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -202,76 +189,33 @@ export default function BlogEditorPage() {
           const { url } = await res.json();
           setImagePreview(url);
           setBlog(p => ({ ...p, image: url }));
-          setErrorMessage(null);
-          return;
-        } else {
-          if (res.status === 413) {
-            setErrorMessage('Image too large. Please choose a smaller file (max 5 MB).');
-          } else {
-            const err = await res.text();
-            setErrorMessage(`Upload failed: ${err}`);
-          }
           return;
         }
-      } catch (e) {
-        setErrorMessage('Network error during upload.');
-        return;
-      }
-      // Fallback: compress before base64 to avoid large payload
-      const src = await compressImageToBase64(file, 1200, 0.8);
-      setImagePreview(src);
-      setBlog(p => ({ ...p, image: src }));
-      setErrorMessage(null);
+      } catch {}
+      // Fallback: base64 preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const src = e.target?.result as string;
+        setImagePreview(src);
+        setBlog(p => ({ ...p, image: src }));
+      };
+      reader.readAsDataURL(file);
     } finally { setUploadingImg(false); }
   };
 
   const handleInlineImageUpload = async (file: File): Promise<string> => {
-    // Step 1: try real upload endpoint
     const token = localStorage.getItem('admin_token');
     const form = new FormData();
     form.append('file', file);
     try {
-      const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: form,
-      });
-      if (res.ok) {
-        const { url } = await res.json();
-        return url;
-      }
+      const res = await fetch('/api/admin/upload', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form });
+      if (res.ok) { const { url } = await res.json(); return url; }
     } catch {}
-
-    // Step 2: fallback — compress image before base64 to avoid hanging
-    return compressImageToBase64(file, 900, 0.75);
-  };
-
-  // Compress image to max width and quality before converting to base64
-  const compressImageToBase64 = (file: File, maxWidth = 900, quality = 0.75): Promise<string> => {
+    // fallback base64
     return new Promise((resolve) => {
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        const canvas = document.createElement('canvas');
-        let { width, height } = img;
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = () => {
-        // Last resort: raw base64
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target?.result as string);
-        reader.readAsDataURL(file);
-      };
-      img.src = url;
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.readAsDataURL(file);
     });
   };
 
@@ -322,7 +266,7 @@ export default function BlogEditorPage() {
     );
   }
 
-  const wordCount = blog.content && typeof blog.content === 'string' ? (blog.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length) : 0;
+  const wordCount = blog.content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length;
 
   return (
     <AdminLayout>
@@ -351,12 +295,6 @@ export default function BlogEditorPage() {
                 <span className="flex items-center gap-1 text-xs text-red-500 font-medium flex-shrink-0">
                   <AlertCircle size={12} /> Error saving
                 </span>
-              )}
-              {errorMessage && (
-                <div className="flex items-center gap-2 bg-rose-100 text-rose-800 border border-rose-200 rounded p-2 mt-2">
-                  <AlertCircle size={14} />
-                  <span>{errorMessage}</span>
-                </div>
               )}
               {saving && (
                 <span className="flex items-center gap-1 text-xs text-slate-400 flex-shrink-0">
@@ -421,9 +359,8 @@ export default function BlogEditorPage() {
                 value={blog.title}
                 rows={2}
                 onChange={e => setBlog(p => ({ ...p, title: e.target.value }))}
-                // TO THIS:
-                className="w-full px-8 pt-6 pb-2 text-xl sm:text-2xl font-bold text-slate-900 placeholder-slate-300 resize-none focus:outline-none border-b border-slate-100"
-                style={{ fontFamily: "'Times New Roman', Times, serif" }}
+                className="w-full px-8 pt-6 pb-2 text-3xl sm:text-4xl font-black text-slate-900 placeholder-slate-300 resize-none focus:outline-none border-b border-slate-100"
+                style={{ fontFamily: "'Syne', sans-serif" }}
               />
               <div className="flex items-center gap-2 px-8 py-3 text-xs text-slate-400">
                 <span>Permalink:</span>

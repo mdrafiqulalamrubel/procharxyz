@@ -4,7 +4,7 @@ import clientPromise from '../../../lib/mongodb';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const client = await clientPromise;
-    const db = client.db('prochar');
+    const db = client.db(process.env.MONGODB_DB || 'prochar_crm');
     const { slug } = req.query;
 
     if (req.method === 'GET') {

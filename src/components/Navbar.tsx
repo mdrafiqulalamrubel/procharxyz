@@ -38,7 +38,7 @@ export default function Navbar({ onSignup }: NavbarProps) {
             <img
               src="/logo.png"
               alt="Prochar Logo"
-              className="h-10 w-auto"
+              className="h-16 w-auto"
             />
           </a>
 

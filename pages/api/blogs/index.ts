@@ -5,7 +5,7 @@ import clientPromise from '../../../lib/mongodb';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const client = await clientPromise;
-    const db = client.db('prochar');
+    const db = client.db(process.env.MONGODB_DB || 'prochar_crm');
 
     if (req.method === 'GET') {
       const { category, tag, limit = '10', page = '1' } = req.query;

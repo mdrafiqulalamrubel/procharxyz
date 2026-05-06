@@ -35,7 +35,7 @@ function StatCard({ icon, label, value, sub, color }: { icon: React.ReactNode; l
     <div className="bg-white rounded-2xl border border-slate-200 p-5 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>{icon}</div>
       <div>
-        <div className="text-2xl font-black text-slate-900" style={{ fontFamily: "'Times New Roman', Times, serif" }}>{value}</div>
+        <div className="text-2xl font-black text-slate-900" style={{ fontFamily: "'Syne', sans-serif" }}>{value}</div>
         <div className="text-sm font-medium text-slate-500">{label}</div>
         {sub && <div className="text-xs text-slate-400 mt-0.5">{sub}</div>}
       </div>
@@ -54,7 +54,7 @@ export default function BlogsPage() {
   const [page, setPage]           = useState(1);
   const [total, setTotal]         = useState(0);
   const [search, setSearch]       = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'draft'>('all');
+  const [filterStatus, setFilter] = useState<'all' | 'published' | 'draft'>('all');
   const [openMenu, setOpenMenu]   = useState<string | null>(null);
   const [deleting, setDeleting]   = useState<string | null>(null);
 
@@ -133,7 +133,7 @@ export default function BlogsPage() {
         {/* ── HEADER ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black text-slate-900" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
+            <h1 className="text-3xl font-black text-slate-900" style={{ fontFamily: "'Syne', sans-serif" }}>
               Blog Posts
             </h1>
             <p className="text-slate-500 mt-0.5 text-sm">Manage and publish your content</p>

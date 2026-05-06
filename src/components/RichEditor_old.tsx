@@ -236,11 +236,10 @@ export default function RichEditor({ content, onChange, onImageUpload }: RichEdi
           content: attr(data-placeholder);
           float: left; color: #94a3b8; pointer-events: none; height: 0;
         }
-        // TO THIS:
-        .re-wrap .tiptap { font-family: 'Times New Roman', Times, serif; line-height: 1.85; color: #1e293b; min-height: 500px; padding: 2rem 2.5rem; }
-        .re-wrap .tiptap h1 { font-size: 2rem; font-weight: 800; margin: 1.5rem 0 0.75rem; line-height: 1.2; font-family: 'Times New Roman', Times, serif; }
-        .re-wrap .tiptap h2 { font-size: 1.5rem; font-weight: 700; margin: 1.25rem 0 0.6rem; font-family: 'Times New Roman', Times, serif; }
-        .re-wrap .tiptap h3 { font-size: 1.2rem; font-weight: 700; margin: 1rem 0 0.5rem; font-family: 'Times New Roman', Times, serif; }
+        .re-wrap .tiptap h1 { font-size: 2rem; font-weight: 800; margin: 1.5rem 0 0.75rem; line-height: 1.2; font-family: system-ui, sans-serif; }
+        .re-wrap .tiptap h2 { font-size: 1.5rem; font-weight: 700; margin: 1.25rem 0 0.6rem; font-family: system-ui, sans-serif; }
+        .re-wrap .tiptap h3 { font-size: 1.2rem; font-weight: 700; margin: 1rem 0 0.5rem; font-family: system-ui, sans-serif; }
+        .re-wrap .tiptap p  { margin: 0.5rem 0; }
         .re-wrap .tiptap ul { list-style: disc; padding-left: 1.5rem; margin: 0.75rem 0; }
         .re-wrap .tiptap ol { list-style: decimal; padding-left: 1.5rem; margin: 0.75rem 0; }
         .re-wrap .tiptap li { margin: 0.25rem 0; }

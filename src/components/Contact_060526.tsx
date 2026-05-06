@@ -20,36 +20,16 @@ export default function Contact() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
- // In Contact.tsx, update the handleSubmit function
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    try {
-      const response = await fetch('/api/contacts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSubmitted(true);
-        setFormData({ name: '', email: '', subject: '', message: '' });
-        setTimeout(() => setSubmitted(false), 4000);
-      } else {
-        console.error('Error:', data.error);
-        alert('Failed to send message. Please try again.');
-      }
-    } catch (error) {
-      console.error('Submission error:', error);
-      alert('Failed to send message. Please try again.');
-    } finally {
+    // Simulate form submission
+    setTimeout(() => {
       setLoading(false);
-    }
+      setSubmitted(true);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+      setTimeout(() => setSubmitted(false), 4000);
+    }, 1000);
   };
 
   return (
